@@ -19,7 +19,7 @@ def get_float(l, key):
 
 def summary(prob):
     div = '---------------------------------------\n'
-    print("Variables:\n")
+    print("Team Roster :\n")
     score = str(prob.objective)
     constraints = [str(const) for const in prob.constraints.values()]
     for v in prob.variables():
@@ -28,7 +28,7 @@ def summary(prob):
         if v.varValue != 0:
             print(v.name, "=", v.varValue)
     print(div)
-    print("Constraints:")
+    print("Team Cost:")
     for constraint in constraints:
         constraint_pretty = " + ".join(re.findall("[0-9\.]*\*1.0", constraint))
         if constraint_pretty != "":
@@ -139,18 +139,14 @@ prob.solve()
 summary(prob)
 
 greedy_points = greedy("points")
-print(greedy_points)
-print(eval_players(greedy_points))
+print("\nProjected Points: \n",eval_players(greedy_points))
 
 # Calculate points per dk$ spent
 points_per_dollar = current.points / current.salary
 current["points_per_dollar"] = points_per_dollar
-
 #Calculeate overall
-points_per_dollar = current.points / current.salary
-current["points_per_dollar"] = points_per_dollar
 greedy_points = greedy("points_per_dollar")
-print(greedy_points)
+print("Final Player List: \n", greedy_points)
 
 eval_players(greedy_points)
 

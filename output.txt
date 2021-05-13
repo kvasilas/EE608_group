@@ -1,0 +1,36 @@
+Result - Optimal solution found
+
+Objective value:                256.80000000
+Enumerated nodes:               8
+Total iterations:               567
+Time (CPU seconds):             0.07
+Time (Wallclock seconds):       0.07
+
+Option for printingOptions changed from normal to all
+Total time (CPU seconds):       0.07   (Wallclock seconds):       0.07
+
+Team Roster :
+
+DST_Jets_ = 1.0
+QB_Ryan_Fitzpatrick = 1.0
+RB_James_Conner = 1.0
+RB_Melvin_Gordon_III = 1.0
+TE_Jared_Cook = 1.0
+TE_Jesse_James = 1.0
+WR_DeSean_Jackson = 1.0
+WR_JuJu_Smith_Schuster = 1.0
+WR_Kenny_Golladay = 1.0
+WR_Will_Fuller_V = 1.0
+---------------------------------------
+
+Team Cost:
+2500*1.0 + 5500*1.0 + 6700*1.0 + 7400*1.0 + 3600*1.0 + 2800*1.0 + 4900*1.0 + 6400*1.0 + 4800*1.0 + 5300*1.0 = 49900.0
+---------------------------------------
+
+Score:
+13.0*1.0 + 39.6*1.0 + 28.9*1.0 + 30.6*1.0 + 19.5*1.0 + 18.4*1.0 + 30.3*1.0 + 27.0*1.0 + 21.2*1.0 + 28.3*1.0 = 256.8
+
+Projected Points: 
+ 210.50000000000003
+Final Player List: 
+ ['James Conner', 'Austin Ekeler', 'Melvin Gordon III', 'DeSean Jackson', 'Will Fuller V', 'Kenny Golladay', 'Tyreek Hill', 'Ryan Fitzpatrick', 'Jesse James']
