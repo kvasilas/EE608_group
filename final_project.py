@@ -7,89 +7,15 @@ from itertools import permutations
 from pulp import *
 
 
-LATEST_URL = "https://api.draftkings.com/draftgroups/v1/draftgroups/21434/draftables?format=json"
-
-response = urllib.urlopen(LATEST_URL, timeout=1)
-data = json.loads(response.read())
-current = pd.DataFrame.from_dict(data["draftables"])
-
-# Remove players that are out or questionable
-current = current[current.status == "None"]
-
-current.head()
-
-
 def get_float(l, key):
-    """ Returns first float value from a list of dictionaries based on key. Defaults to 0.0 """
     for d in l:
         try:
             return float(d.get(key))
         except:
             pass
+    #rtn is a float
     return 0.0
 
-points = [get_float(x, "value") for x in current.draftStatAttributes]
-current["points"] = points
-
-availables = current[["position", "displayName", "salary", "points"]].groupby(["position", "displayName", "salary", "points"]).agg("count")
-availables = availables.reset_index()
-
-availables[availables.position=="QB"].head(15)
-
-salaries = {}
-points = {}
-for pos in availables.position.unique():
-    available_pos = availables[availables.position == pos]
-    salary = list(available_pos[["displayName","salary"]].set_index("displayName").to_dict().values())[0]
-    point = list(available_pos[["displayName","points"]].set_index("displayName").to_dict().values())[0]
-    salaries[pos] = salary
-    points[pos] = point
-
-pos_num_available = {
-    "QB": 1,
-    "RB": 3,
-    "WR": 4,
-    "TE": 2,
-    "FLEX": 1,
-    "DST": 1
-}
-
-pos_flex = {
-    "QB": 0,
-    "RB": 1,
-    "WR": 1,
-    "TE": 1,
-    "FLEX": 0,
-    "DST": 0
-}
-
-pos_flex_available = 5
-
-
-
-salaries["DST"]
-
-SALARY_CAP = 50000
-_vars = {k: LpVariable.dict(k, v, cat="Binary") for k, v in points.items()}
-
-prob = LpProblem("Fantasy", LpMaximize)
-rewards = []
-costs = []
-position_constraints = []
-
-# Setting up the reward
-for k, v in _vars.items():
-    costs += lpSum([salaries[k][i] * _vars[k][i] for i in v])
-    rewards += lpSum([points[k][i] * _vars[k][i] for i in v])
-    prob += lpSum([_vars[k][i] for i in v]) <= pos_num_available[k]
-    prob += lpSum([pos_flex[k] * _vars[k][i] for i in v]) <= pos_flex_available
-    
-prob += lpSum(rewards)
-prob += lpSum(costs) <= SALARY_CAP
-
-
-
-prob.solve()
 
 def summary(prob):
     div = '---------------------------------------\n'
@@ -112,12 +38,9 @@ def summary(prob):
     score_pretty = " + ".join(re.findall("[0-9\.]+\*1.0", score))
     print("{} = {}".format(score_pretty, eval(score)))
 
-summary(prob)
-
 
 def eval_players(players):
     return sum([current[current.displayName == player].iloc[0].points for player in players])
-
 
 
 def greedy(val):
@@ -143,18 +66,91 @@ def greedy(val):
     return best_players
 
 
+
+#Read in Json from draftkings
+DATA_LOC = "https://api.draftkings.com/draftgroups/v1/draftgroups/21434/draftables?format=json"
+response = urllib.urlopen(DATA_LOC, timeout=1)
+data = json.loads(response.read())
+current = pd.DataFrame.from_dict(data["draftables"])
+
+# Remove any playersnt playing that week
+current = current[current.status == "None"]
+current.head()
+
+
+points = [get_float(x, "value") for x in current.draftStatAttributes]
+current["points"] = points
+
+availables = current[["position", "displayName", "salary", "points"]].groupby(["position", "displayName", "salary", "points"]).agg("count")
+availables = availables.reset_index()
+
+availables[availables.position=="QB"].head(15)
+
+salaries = {}
+points = {}
+for pos in availables.position.unique():
+    available_pos = availables[availables.position == pos]
+    salary = list(available_pos[["displayName","salary"]].set_index("displayName").to_dict().values())[0]
+    point = list(available_pos[["displayName","points"]].set_index("displayName").to_dict().values())[0]
+    salaries[pos] = salary
+    points[pos] = point
+
+#positions avaliable
+pos_num_available = {
+    "QB": 1,
+    "RB": 3,
+    "WR": 4,
+    "TE": 2,
+    "FLEX": 1,
+    "DST": 1
+}
+#Possibilities for a flex
+pos_flex = {
+    "QB": 0,
+    "RB": 1,
+    "WR": 1,
+    "TE": 1,
+    "FLEX": 0,
+    "DST": 0
+}
+pos_flex_available = 5
+
+salaries["DST"]
+
+SALARY_CAP = 50000 
+_vars = {k: LpVariable.dict(k, v, cat="Binary") for k, v in points.items()}
+
+prob = LpProblem("Fantasy", LpMaximize)
+rewards = []
+costs = []
+position_constraints = []
+
+# Setting up the reward
+for k, v in _vars.items():
+    costs += lpSum([salaries[k][i] * _vars[k][i] for i in v])
+    rewards += lpSum([points[k][i] * _vars[k][i] for i in v])
+    prob += lpSum([_vars[k][i] for i in v]) <= pos_num_available[k]
+    prob += lpSum([pos_flex[k] * _vars[k][i] for i in v]) <= pos_flex_available
+    
+prob += lpSum(rewards)
+prob += lpSum(costs) <= SALARY_CAP
+prob.solve()
+
+summary(prob)
+
 greedy_points = greedy("points")
 print(greedy_points)
 print(eval_players(greedy_points))
 
+# Calculate points per dk$ spent
 points_per_dollar = current.points / current.salary
 current["points_per_dollar"] = points_per_dollar
 
-
-
+#Calculeate overall
 points_per_dollar = current.points / current.salary
 current["points_per_dollar"] = points_per_dollar
 greedy_points = greedy("points_per_dollar")
 print(greedy_points)
+
 eval_players(greedy_points)
 
